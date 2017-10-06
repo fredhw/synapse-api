@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 )
@@ -55,6 +56,18 @@ func SummaryHandler(w http.ResponseWriter, r *http.Request) {
 	https://golang.org/pkg/net/http/#Error
 	https://golang.org/pkg/encoding/json/#NewEncoder
 	*/
+
+	w.Header().Add("Access-Control-Allow-Origin", "*")
+
+	url := r.URL.Query().Get("url")
+	if len(url) == 0 {
+		http.Error(w, "please provide a url", http.StatusBadRequest)
+		return
+	}
+
+	summ, err := extractSummary(url, nil)
+
+	json.NewEncoder(w).Encode(summ)
 }
 
 //fetchHTML fetches `pageURL` and returns the body stream or an error.
@@ -75,6 +88,7 @@ func fetchHTML(pageURL string) (io.ReadCloser, error) {
 	Helpful Links:
 	https://golang.org/pkg/net/http/#Get
 	*/
+
 	return nil, nil
 }
 

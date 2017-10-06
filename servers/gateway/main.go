@@ -1,5 +1,13 @@
 package main
 
+import (
+	"log"
+	"net/http"
+	"os"
+
+	"github.com/fredhw/challenges-fredhw/servers/gateway/handlers"
+)
+
 //main is the main entry point for the server
 func main() {
 	/* TODO: add code to do the following
@@ -14,4 +22,12 @@ func main() {
 	  that occur when trying to start the web server.
 	*/
 
+	port := ":80"
+
+	if env := os.Getenv("ADDR"); len(env) > 0 {
+		port = env
+	}
+	mux := http.NewServeMux()
+	mux.HandleFunc("/v1/summary", handlers.SummaryHandler)
+	log.Fatal(http.ListenAndServe("localhost"+port, mux))
 }
