@@ -2,8 +2,15 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
+
+	"golang.org/x/net/html"
 )
 
 //PreviewImage represents a preview image for a page
@@ -59,14 +66,21 @@ func SummaryHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Access-Control-Allow-Origin", "*")
 
-	url := r.URL.Query().Get("url")
-	if len(url) == 0 {
+	pageURL := r.FormValue("url")
+	if len(pageURL) == 0 {
 		http.Error(w, "please provide a url", http.StatusBadRequest)
 		return
 	}
 
-	summ, err := extractSummary(url, nil)
-
+	respBody, err := fetchHTML(pageURL)
+	if err != nil {
+		log.Fatalf("error fetching URL %v\n", err)
+	}
+	summ, err := extractSummary(pageURL, respBody)
+	if err != nil {
+		log.Fatalf("error extracting summary %v\n", err)
+	}
+	defer respBody.Close()
 	json.NewEncoder(w).Encode(summ)
 }
 
@@ -88,8 +102,23 @@ func fetchHTML(pageURL string) (io.ReadCloser, error) {
 	Helpful Links:
 	https://golang.org/pkg/net/http/#Get
 	*/
+	resp, err := http.Get(pageURL)
+	if err != nil {
+		return nil, err
+	}
 
-	return nil, nil
+	// check response status code
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("bad request: %v", resp.StatusCode)
+	}
+
+	// check response content type
+	ctype := resp.Header.Get("Content-Type")
+	if !strings.HasPrefix(ctype, "text/html") {
+		return nil, fmt.Errorf("bad request: %v", http.StatusBadRequest)
+	}
+
+	return resp.Body, nil
 }
 
 //extractSummary tokenizes the `htmlStream` and populates a PageSummary
@@ -109,5 +138,140 @@ func extractSummary(pageURL string, htmlStream io.ReadCloser) (*PageSummary, err
 	https://developers.facebook.com/docs/reference/opengraph/
 	https://golang.org/pkg/net/url/#URL.ResolveReference
 	*/
-	return nil, nil
+
+	base, _ := url.Parse(pageURL)
+	tokenizer := html.NewTokenizer(htmlStream)
+	summ := PageSummary{}
+
+	for {
+		tokenType := tokenizer.Next()
+
+		// if error token
+		if tokenType == html.ErrorToken {
+			return &summ, tokenizer.Err()
+		}
+
+		// if start tag token
+		if tokenType == html.StartTagToken || tokenType == html.SelfClosingTagToken {
+			token := tokenizer.Token()
+
+			if "link" == token.Data {
+				var rel string
+				var href string
+				var sizes string
+				var itype string
+				for _, attr := range token.Attr {
+					switch attr.Key {
+					case "rel":
+						rel = attr.Val
+					case "href":
+						href = attr.Val
+					case "sizes":
+						sizes = attr.Val
+					case "type":
+						itype = attr.Val
+					}
+				}
+				if rel == "icon" && len(href) > 0 {
+					img := PreviewImage{}
+					u, _ := url.Parse(href)
+					abs := base.ResolveReference(u)
+					img.URL = abs.String()
+					if len(sizes) > 0 {
+						s := strings.Split(sizes, "x")
+						// avoid "any" case
+						if len(s) > 1 {
+							w, _ := strconv.Atoi(s[1])
+							h, _ := strconv.Atoi(s[0])
+							img.Width = w
+							img.Height = h
+						}
+					}
+					if len(itype) > 0 {
+						img.Type = itype
+					}
+					summ.Icon = &img
+				}
+			}
+
+			if "title" == token.Data {
+				tokenizer.Next()
+				if len(summ.Title) == 0 {
+					summ.Title = tokenizer.Token().Data
+				}
+			}
+
+			if "meta" == token.Data {
+				var prop string
+				var content string
+				var name string
+
+				for _, attr := range token.Attr {
+					switch attr.Key {
+					case "property":
+						prop = attr.Val
+					case "name":
+						name = attr.Val
+					case "content":
+						content = attr.Val
+					}
+				}
+
+				if len(name) > 0 {
+					switch name {
+					case "description":
+						if len(summ.Description) == 0 {
+							summ.Description = content
+						}
+					case "author":
+						summ.Author = content
+					case "keywords":
+						words := strings.Split(content, ",")
+						for _, word := range words {
+							word := strings.TrimSpace(word)
+							summ.Keywords = append(summ.Keywords, word)
+						}
+					}
+				}
+
+				if len(prop) > 0 && len(content) > 0 {
+					switch prop {
+					case "og:type":
+						summ.Type = content
+					case "og:url":
+						summ.URL = content
+					case "og:title":
+						summ.Title = content
+					case "og:site_name":
+						summ.SiteName = content
+					case "og:description":
+						summ.Description = content
+					case "og:image":
+						prev := PreviewImage{}
+						u, _ := url.Parse(content)
+						abs := base.ResolveReference(u)
+						prev.URL = abs.String()
+						summ.Images = append(summ.Images, &prev)
+					case "og:image:secure_url":
+						prev := summ.Images[len(summ.Images)-1]
+						prev.SecureURL = content
+					case "og:image:type":
+						prev := summ.Images[len(summ.Images)-1]
+						prev.Type = content
+					case "og:image:width":
+						prev := summ.Images[len(summ.Images)-1]
+						w, _ := strconv.Atoi(content)
+						prev.Width = w
+					case "og:image:height":
+						prev := summ.Images[len(summ.Images)-1]
+						h, _ := strconv.Atoi(content)
+						prev.Height = h
+					case "og:image:alt":
+						prev := summ.Images[len(summ.Images)-1]
+						prev.Alt = content
+					}
+				}
+			}
+		}
+	}
 }

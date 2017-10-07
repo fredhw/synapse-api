@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/fredhw/challenges-fredhw/servers/gateway/handlers"
 )
@@ -29,5 +31,7 @@ func main() {
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/v1/summary", handlers.SummaryHandler)
-	log.Fatal(http.ListenAndServe("localhost"+port, mux))
+	port = strings.Join([]string{"localhost", port}, "")
+	fmt.Println(port)
+	log.Fatal(http.ListenAndServe(port, mux))
 }
