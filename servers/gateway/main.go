@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/fredhw/challenges-fredhw/servers/gateway/handlers"
 )
@@ -24,14 +23,13 @@ func main() {
 	  that occur when trying to start the web server.
 	*/
 
-	port := ":80"
+	port := "localhost:80"
 
 	if env := os.Getenv("ADDR"); len(env) > 0 {
 		port = env
 	}
+	fmt.Println(port)
 	mux := http.NewServeMux()
 	mux.HandleFunc("/v1/summary", handlers.SummaryHandler)
-	port = strings.Join([]string{"localhost", port}, "")
-	fmt.Println(port)
 	log.Fatal(http.ListenAndServe(port, mux))
 }

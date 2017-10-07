@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -74,11 +73,11 @@ func SummaryHandler(w http.ResponseWriter, r *http.Request) {
 
 	respBody, err := fetchHTML(pageURL)
 	if err != nil {
-		log.Fatalf("error fetching URL %v\n", err)
+		http.Error(w, "error fetching URL %v\n", http.StatusBadRequest)
 	}
 	summ, err := extractSummary(pageURL, respBody)
 	if err != nil {
-		log.Fatalf("error extracting summary %v\n", err)
+		http.Error(w, "error extracting summary %v\n", http.StatusBadRequest)
 	}
 	defer respBody.Close()
 	json.NewEncoder(w).Encode(summ)
