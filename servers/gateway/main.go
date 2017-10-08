@@ -23,6 +23,8 @@ func main() {
 	  that occur when trying to start the web server.
 	*/
 
+	fmt.Printf("hello, world]\n")
+
 	port := "localhost:80"
 
 	if env := os.Getenv("ADDR"); len(env) > 0 {

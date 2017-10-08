@@ -63,6 +63,7 @@ func SummaryHandler(w http.ResponseWriter, r *http.Request) {
 	https://golang.org/pkg/encoding/json/#NewEncoder
 	*/
 
+	w.Header().Add("Content-Type", "application/json")
 	w.Header().Add("Access-Control-Allow-Origin", "*")
 
 	pageURL := r.FormValue("url")
@@ -147,7 +148,10 @@ func extractSummary(pageURL string, htmlStream io.ReadCloser) (*PageSummary, err
 
 		// if error token
 		if tokenType == html.ErrorToken {
-			return &summ, tokenizer.Err()
+			if tokenizer.Err() == io.EOF {
+				return &summ, nil
+			}
+			return nil, tokenizer.Err()
 		}
 
 		// if start tag token
