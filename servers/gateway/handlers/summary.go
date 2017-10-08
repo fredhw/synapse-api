@@ -22,6 +22,15 @@ type PreviewImage struct {
 	Alt       string `json:"alt,omitempty"`
 }
 
+//PreviewVideo represents a preview video for a page
+type PreviewVideo struct {
+	URL       string `json:"url,omitempty"`
+	SecureURL string `json:"secureURL,omitempty"`
+	Type      string `json:"type,omitempty"`
+	Width     int    `json:"width,omitempty"`
+	Height    int    `json:"height,omitempty"`
+}
+
 //PageSummary represents summary properties for a web page
 type PageSummary struct {
 	Type        string          `json:"type,omitempty"`
@@ -33,6 +42,7 @@ type PageSummary struct {
 	Keywords    []string        `json:"keywords,omitempty"`
 	Icon        *PreviewImage   `json:"icon,omitempty"`
 	Images      []*PreviewImage `json:"images,omitempty"`
+	Videos      []*PreviewVideo `json:"videos,omitempty"`
 }
 
 //SummaryHandler handles requests for the page summary API.
@@ -241,14 +251,40 @@ func extractSummary(pageURL string, htmlStream io.ReadCloser) (*PageSummary, err
 					switch prop {
 					case "og:type":
 						summ.Type = content
+					case "twitter:card":
+						if len(summ.Type) == 0 {
+							summ.Type = content
+						}
 					case "og:url":
 						summ.URL = content
 					case "og:title":
 						summ.Title = content
+					case "twitter:title":
+						if len(summ.Title) == 0 {
+							summ.Title = content
+						}
 					case "og:site_name":
 						summ.SiteName = content
 					case "og:description":
 						summ.Description = content
+					case "twitter:description":
+						if len(summ.Description) == 0 {
+							summ.Description = content
+						}
+					case "twitter:image":
+						found := 0
+						for _, image := range summ.Images {
+							if image.URL == content {
+								found = 1;
+							}
+						}
+						if found == 0 {
+							prev := PreviewImage{}
+							u, _ := url.Parse(content)
+							abs := base.ResolveReference(u)
+							prev.URL = abs.String()
+							summ.Images = append(summ.Images, &prev)
+						}
 					case "og:image":
 						prev := PreviewImage{}
 						u, _ := url.Parse(content)
@@ -272,6 +308,26 @@ func extractSummary(pageURL string, htmlStream io.ReadCloser) (*PageSummary, err
 					case "og:image:alt":
 						prev := summ.Images[len(summ.Images)-1]
 						prev.Alt = content
+					case "og:video":
+						prev := PreviewVideo{}
+						u, _ := url.Parse(content)
+						abs := base.ResolveReference(u)
+						prev.URL = abs.String()
+						summ.Videos = append(summ.Videos, &prev)
+					case "og:video:secure_url":
+						prev := summ.Videos[len(summ.Videos)-1]
+						prev.SecureURL = content
+					case "og:video:type":
+						prev := summ.Videos[len(summ.Videos)-1]
+						prev.Type = content
+					case "og:video:width":
+						prev := summ.Videos[len(summ.Videos)-1]
+						w, _ := strconv.Atoi(content)
+						prev.Width = w
+					case "og:video:height":
+						prev := summ.Videos[len(summ.Videos)-1]
+						h, _ := strconv.Atoi(content)
+						prev.Height = h
 					}
 				}
 			}
