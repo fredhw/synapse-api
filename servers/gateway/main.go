@@ -32,6 +32,6 @@ func main() {
 	}
 	fmt.Println(port)
 	mux := http.NewServeMux()
-	mux.HandleFunc("/v1/summary", handlers.SummaryHandler)
+	mux.HandleFunc("/v1/summary/", handlers.SummaryHandler)
 	log.Fatal(http.ListenAndServe(port, mux))
 }
