@@ -84,11 +84,13 @@ func SummaryHandler(w http.ResponseWriter, r *http.Request) {
 
 	respBody, err := fetchHTML(pageURL)
 	if err != nil {
-		http.Error(w, "error fetching URL %v\n", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 	summ, err := extractSummary(pageURL, respBody)
 	if err != nil {
-		http.Error(w, "error extracting summary %v\n", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 	defer respBody.Close()
 	json.NewEncoder(w).Encode(summ)
@@ -119,13 +121,13 @@ func fetchHTML(pageURL string) (io.ReadCloser, error) {
 
 	// check response status code
 	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("bad request: %v", resp.StatusCode)
+		return nil, fmt.Errorf("GET response status %v", resp.StatusCode)
 	}
 
 	// check response content type
 	ctype := resp.Header.Get("Content-Type")
 	if !strings.HasPrefix(ctype, "text/html") {
-		return nil, fmt.Errorf("bad request: %v", http.StatusBadRequest)
+		return nil, fmt.Errorf("content-type not text/html but was %v", ctype)
 	}
 
 	return resp.Body, nil
@@ -167,8 +169,8 @@ func extractSummary(pageURL string, htmlStream io.ReadCloser) (*PageSummary, err
 		// if start tag token
 		if tokenType == html.StartTagToken || tokenType == html.SelfClosingTagToken {
 			token := tokenizer.Token()
-
-			if "link" == token.Data {
+			switch token.Data {
+			case "link":
 				var rel string
 				var href string
 				var sizes string
@@ -205,16 +207,12 @@ func extractSummary(pageURL string, htmlStream io.ReadCloser) (*PageSummary, err
 					}
 					summ.Icon = &img
 				}
-			}
-
-			if "title" == token.Data {
+			case "title":
 				tokenizer.Next()
 				if len(summ.Title) == 0 {
 					summ.Title = tokenizer.Token().Data
 				}
-			}
-
-			if "meta" == token.Data {
+			case "meta":
 				var prop string
 				var content string
 				var name string
@@ -275,7 +273,7 @@ func extractSummary(pageURL string, htmlStream io.ReadCloser) (*PageSummary, err
 						found := 0
 						for _, image := range summ.Images {
 							if image.URL == content {
-								found = 1;
+								found = 1
 							}
 						}
 						if found == 0 {
@@ -291,6 +289,20 @@ func extractSummary(pageURL string, htmlStream io.ReadCloser) (*PageSummary, err
 						abs := base.ResolveReference(u)
 						prev.URL = abs.String()
 						summ.Images = append(summ.Images, &prev)
+					case "og:image:url":
+						found := 0
+						for _, image := range summ.Images {
+							if image.URL == content {
+								found = 1
+							}
+						}
+						if found == 0 {
+							prev := PreviewImage{}
+							u, _ := url.Parse(content)
+							abs := base.ResolveReference(u)
+							prev.URL = abs.String()
+							summ.Images = append(summ.Images, &prev)
+						}
 					case "og:image:secure_url":
 						prev := summ.Images[len(summ.Images)-1]
 						prev.SecureURL = content
@@ -314,6 +326,20 @@ func extractSummary(pageURL string, htmlStream io.ReadCloser) (*PageSummary, err
 						abs := base.ResolveReference(u)
 						prev.URL = abs.String()
 						summ.Videos = append(summ.Videos, &prev)
+					case "og:video:url":
+						found := 0
+						for _, video := range summ.Videos {
+							if video.URL == content {
+								found = 1
+							}
+						}
+						if found == 0 {
+							prev := PreviewVideo{}
+							u, _ := url.Parse(content)
+							abs := base.ResolveReference(u)
+							prev.URL = abs.String()
+							summ.Videos = append(summ.Videos, &prev)
+						}
 					case "og:video:secure_url":
 						prev := summ.Videos[len(summ.Videos)-1]
 						prev.SecureURL = content
