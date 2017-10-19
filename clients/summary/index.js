@@ -1,12 +1,13 @@
 (function(){
     "use strict";
     window.onload = function() {
+        document.getElementById("results").innerHTML = "start";
         document.getElementById("submit").onclick = getSummary;
     }
     function getSummary() {
         var ajax = new XMLHttpRequest();
         var input = document.getElementById("entry");
-        ajax.open("GET", "http://localhost:4000/v1/summary/?url=" + input.value, true);
+        ajax.open("GET", "https://api.fredhw.me/v1/summary/?url=" + input.value, true);
         ajax.onreadystatechange = function() {
             if (this.readyState == 4 && this.status == 200) {
                 var json = JSON.parse(this.responseText);
