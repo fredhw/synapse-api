@@ -1,8 +1,13 @@
 package sessions
 
 import (
+	"crypto/hmac"
+	"crypto/rand"
 	"crypto/sha256"
+	"crypto/subtle"
+	"encoding/base64"
 	"errors"
+	"fmt"
 )
 
 //InvalidSessionID represents an empty, invalid session ID
@@ -35,6 +40,9 @@ var ErrInvalidID = errors.New("Invalid Session ID")
 func NewSessionID(signingKey string) (SessionID, error) {
 	//TODO: if `signingKey` is zero-length, return InvalidSessionID
 	//and an error indicating that it may not be empty
+	if len(signingKey) == 0 {
+		return InvalidSessionID, errors.New("May not be empty")
+	}
 
 	//TODO: Generate a new digitally-signed SessionID by doing the following:
 	//- create a byte slice where the first `idLength` of bytes
@@ -44,9 +52,25 @@ func NewSessionID(signingKey string) (SessionID, error) {
 	//- encode that byte slice using base64 URL Encoding and return
 	//  the result as a SessionID type
 
+	crb := make([]byte, signedLength)
+	_, err := rand.Read(crb[:idLength])
+	if err != nil {
+		return InvalidSessionID, err
+	}
+
+	h := hmac.New(sha256.New, []byte(signingKey))
+	h.Write(crb[:idLength])
+	signature := h.Sum(nil)
+
+	copy(crb[idLength:], signature)
+
+	dsid := base64.URLEncoding.EncodeToString(crb)
+
+	return (SessionID)(dsid), nil
+
 	//the following return statement is just a placeholder
 	//remove it when implementing the function
-	return InvalidSessionID, nil
+	//return InvalidSessionID, nil
 }
 
 //ValidateID validates the string in the `id` parameter
@@ -60,6 +84,20 @@ func ValidateID(id string, signingKey string) (SessionID, error) {
 	//HMAC hash stored in the remaining bytes. If they match,
 	//return the entire `id` parameter as a SessionID type.
 	//If not, return InvalidSessionID and ErrInvalidID.
+
+	crb, err := base64.URLEncoding.DecodeString(id)
+	if err != nil {
+		return InvalidSessionID, fmt.Errorf("error base64-decoding: %v", err)
+	}
+
+	h := hmac.New(sha256.New, []byte(signingKey))
+	h.Write(crb[:idLength])
+	sig2 := h.Sum(nil)
+	sig1 := crb[idLength:]
+
+	if subtle.ConstantTimeCompare(sig1, sig2) == 1 {
+		return SessionID(id), nil
+	}
 
 	return InvalidSessionID, ErrInvalidID
 }

@@ -2,7 +2,9 @@ package sessions
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"strings"
 )
 
 const headerAuthorization = "Authorization"
@@ -25,8 +27,17 @@ func BeginSession(signingKey string, store Store, sessionState interface{}, w ht
 	//    "Authorization: Bearer <sessionID>"
 	//  where "<sessionID>" is replaced with the newly-created SessionID
 	//  (note the constants declared for you above, which will help you avoid typos)
+	sid, err := NewSessionID(signingKey)
+	if err != nil {
+		return InvalidSessionID, ErrNoSessionID
+	}
+	store.Save(sid, sessionState)
 
-	return InvalidSessionID, nil
+	val := fmt.Sprintf("%v%v", schemeBearer, string(sid))
+
+	w.Header().Add(headerAuthorization, val)
+
+	return sid, nil
 }
 
 //GetSessionID extracts and validates the SessionID from the request headers
@@ -35,7 +46,23 @@ func GetSessionID(r *http.Request, signingKey string) (SessionID, error) {
 	//or the "auth" query string parameter if no Authorization header is present,
 	//and validate it. If it's valid, return the SessionID. If not
 	//return the validation error.
-	return InvalidSessionID, nil
+	val := r.Header.Get(headerAuthorization)
+
+	if len(val) == 0 {
+		val = r.URL.Query().Get(paramAuthorization)
+	}
+
+	if !strings.HasPrefix(val, schemeBearer) {
+		return InvalidSessionID, ErrInvalidScheme
+	}
+
+	val = val[len(schemeBearer):]
+
+	sid, err := ValidateID(val, signingKey)
+	if err != nil {
+		return InvalidSessionID, ErrInvalidID
+	}
+	return sid, nil
 }
 
 //GetState extracts the SessionID from the request,
@@ -44,7 +71,15 @@ func GetSessionID(r *http.Request, signingKey string) (SessionID, error) {
 func GetState(r *http.Request, signingKey string, store Store, sessionState interface{}) (SessionID, error) {
 	//TODO: get the SessionID from the request, and get the data
 	//associated with that SessionID from the store.
-	return InvalidSessionID, nil
+	sid, err := GetSessionID(r, signingKey)
+	if err != nil {
+		return InvalidSessionID, err
+	}
+	err = store.Get(sid, sessionState)
+	if err != nil {
+		return InvalidSessionID, err
+	}
+	return sid, nil
 }
 
 //EndSession extracts the SessionID from the request,
@@ -53,5 +88,13 @@ func GetState(r *http.Request, signingKey string, store Store, sessionState inte
 func EndSession(r *http.Request, signingKey string, store Store) (SessionID, error) {
 	//TODO: get the SessionID from the request, and delete the
 	//data associated with it in the store.
-	return InvalidSessionID, nil
+	sid, err := GetSessionID(r, signingKey)
+	if err != nil {
+		return InvalidSessionID, err
+	}
+	err = store.Delete(sid)
+	if err != nil {
+		return InvalidSessionID, err
+	}
+	return sid, nil
 }
