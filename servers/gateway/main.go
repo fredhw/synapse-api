@@ -1,5 +1,13 @@
 package main
 
+import (
+	"log"
+	"net/http"
+	"os"
+
+	"github.com/challenges-fredhw/servers/gateway/handlers"
+)
+
 //main is the main entry point for the server
 func main() {
 	/* TODO: add code to do the following
@@ -14,4 +22,19 @@ func main() {
 	  that occur when trying to start the web server.
 	*/
 
+	addr := os.Getenv("ADDR")
+	if len(addr) == 0 {
+		addr = ":443"
+	}
+
+	tlskey := os.Getenv("TLSKEY")
+	tlscert := os.Getenv("TLSCERT")
+	if len(tlskey) == 0 || len(tlscert) == 0 {
+		log.Fatal("please set TLSKEY and TLSCERT")
+	}
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/v1/summary/", handlers.SummaryHandler)
+
+	log.Fatal(http.ListenAndServeTLS(addr, tlscert, tlskey, mux))
 }
