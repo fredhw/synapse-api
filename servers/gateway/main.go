@@ -22,12 +22,19 @@ func main() {
 	  that occur when trying to start the web server.
 	*/
 
-	port := "localhost:80"
-
-	if env := os.Getenv("ADDR"); len(env) > 0 {
-		port = env
+	addr := os.Getenv("ADDR")
+	if len(addr) == 0 {
+		addr = ":443"
 	}
+
+	tlskey := os.Getenv("TLSKEY")
+	tlscert := os.Getenv("TLSCERT")
+	if len(tlskey) == 0 || len(tlscert) == 0 {
+		log.Fatal("please set TLSKEY and TLSCERT")
+	}
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/v1/summary/", handlers.SummaryHandler)
-	log.Fatal(http.ListenAndServe(port, mux))
+
+	log.Fatal(http.ListenAndServeTLS(addr, tlscert, tlskey, mux))
 }
