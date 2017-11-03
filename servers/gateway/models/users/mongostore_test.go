@@ -18,10 +18,10 @@ cycle. You should use a similar approach when testing your RedisStore implementa
 func TestMongoStore(t *testing.T) {
 
 	nu := NewUser{
-		Email:        "fredhw@uw.edu",
+		Email:        "foobar@uw.edu",
 		Password:     "123456",
 		PasswordConf: "123456",
-		UserName:     "fredhw",
+		UserName:     "foobar",
 		FirstName:    "Frederick",
 		LastName:     "Wijaya",
 	}

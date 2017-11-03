@@ -6,4 +6,4 @@ set -e
 
 docker push fredhw/gateway
 
-ssh root@165.227.62.58 'bash -s' < run.sh
+ssh 344api 'bash -s' < run.sh

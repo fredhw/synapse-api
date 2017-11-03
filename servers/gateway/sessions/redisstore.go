@@ -40,6 +40,7 @@ func (rs *RedisStore) Save(sid SessionID, sessionState interface{}) error {
 	if err != nil {
 		return err
 	}
+
 	err = rs.Client.Set(sid.getRedisKey(), ss, rs.SessionDuration).Err()
 	if err != nil {
 		return err
