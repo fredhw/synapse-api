@@ -1,0 +1,5 @@
+# files to be ignored
+build.sh
+run.sh
+deploy.sh
+README.md
