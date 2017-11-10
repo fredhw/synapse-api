@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-docker rm -f 344client
+
 docker pull fredhw/messages
+docker rm -f 344client
 
 export TLSCERT=/etc/letsencrypt/live/fredhw.me/fullchain.pem
 export TLSKEY=/etc/letsencrypt/live/fredhw.me/privkey.pem

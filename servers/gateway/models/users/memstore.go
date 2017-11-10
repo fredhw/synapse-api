@@ -2,8 +2,10 @@ package users
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 
+	"github.com/challenges-fredhw/servers/gateway/indexes"
 	"github.com/patrickmn/go-cache"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -102,5 +104,39 @@ func (ms *MemStore) Update(userID bson.ObjectId, updates *Updates) error {
 //Delete deletes the user with the given ID
 func (ms *MemStore) Delete(userID bson.ObjectId) error {
 	ms.entries.Delete(string(userID))
+	return nil
+}
+
+//GetByIDSlice returns Users with the given IDs from a slice {
+func (ms *MemStore) GetByIDSlice(ids []bson.ObjectId) []*User {
+	users := []*User{}
+	for _, id := range ids {
+		user, err := ms.GetByID(id)
+		if err == nil {
+			users = append(users, user)
+		}
+	}
+	return users
+}
+
+//GetAll adds all users to a trie
+func (ms *MemStore) GetAll(tr *indexes.Trie) error {
+	m := ms.entries.Items()
+	for _, v := range m {
+		user := &User{}
+		if err := json.Unmarshal((v.Object).([]byte), user); err != nil {
+			return err
+		}
+
+		em := strings.ToLower(user.Email)
+		un := strings.ToLower(user.UserName)
+		fn := strings.ToLower(user.FirstName)
+		ln := strings.ToLower(user.LastName)
+
+		tr.Add(em, user.ID)
+		tr.Add(un, user.ID)
+		tr.Add(fn, user.ID)
+		tr.Add(ln, user.ID)
+	}
 	return nil
 }

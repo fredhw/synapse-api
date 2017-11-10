@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
+	"github.com/challenges-fredhw/servers/gateway/indexes"
 	"github.com/challenges-fredhw/servers/gateway/models/users"
 	"github.com/challenges-fredhw/servers/gateway/sessions"
 )
@@ -56,6 +58,8 @@ func (ctx *Context) UsersHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("error inserting user: %v", err), http.StatusInternalServerError)
 			return
 		}
+
+		addToTrie(user, ctx.trie)
 
 		state := &sessionState{
 			Time: time.Now(),
@@ -108,10 +112,21 @@ func (ctx *Context) UsersMeHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		//apply updates
+		if err := ctx.userStore.Update(state.User.ID, &upd); err != nil {
+			http.Error(w, fmt.Sprintf("error updating user: %v", err), http.StatusBadRequest)
+			return
+		}
+
+		if err := addAndRemove(state.User, ctx.trie, &upd); err != nil {
+			http.Error(w, fmt.Sprintf("error with trie: %v", err), http.StatusInternalServerError)
+			return
+		}
+
 		if err := state.User.ApplyUpdates(&upd); err != nil {
 			http.Error(w, fmt.Sprintf("error updating user: %v", err), http.StatusBadRequest)
 			return
 		}
+
 		if err := ctx.sessionStore.Save(sid, state); err != nil {
 			http.Error(w, fmt.Sprintf("error updating user in store: %v", err), http.StatusBadRequest)
 			return
@@ -182,10 +197,68 @@ func (ctx *Context) SessionsMineHandler(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
+//SearchHandler handles user search requests for authenticated users
+func (ctx *Context) SearchHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "GET":
+		//get state from context
+		state := &sessionState{}
+		_, err := sessions.GetState(r, ctx.signingKey, ctx.sessionStore, state)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("error retrieving session state: %v", err), http.StatusUnauthorized)
+			return
+		}
+
+		q := r.URL.Query().Get("q")
+		if len(q) == 0 {
+			respond(w, "")
+		}
+		q = strings.ToLower(q)
+		ids := ctx.trie.Get(20, q)
+		users := ctx.userStore.GetByIDSlice(ids)
+		respond(w, users)
+
+	default:
+		http.Error(w, "method must be GET", http.StatusMethodNotAllowed)
+		return
+	}
+}
+
 //respond encodes `value` into JSON and writes that to the response
 func respond(w http.ResponseWriter, value interface{}) {
 	w.Header().Add(headerContentType, contentTypeJSON)
 	if err := json.NewEncoder(w).Encode(value); err != nil {
 		http.Error(w, fmt.Sprintf("error encoding response value to JSON: %v", err), http.StatusInternalServerError)
 	}
+}
+
+//addToTrie indexes user fields into the Trie
+func addToTrie(user *users.User, trie *indexes.Trie) {
+	em := strings.ToLower(user.Email)
+	un := strings.ToLower(user.UserName)
+	fn := strings.ToLower(user.FirstName)
+	ln := strings.ToLower(user.LastName)
+
+	trie.Add(em, user.ID)
+	trie.Add(un, user.ID)
+	trie.Add(fn, user.ID)
+	trie.Add(ln, user.ID)
+}
+
+//removeFromTrie removes indexed user fields from the Trie
+func addAndRemove(user *users.User, trie *indexes.Trie, upd *users.Updates) error {
+	of := strings.ToLower(user.FirstName)
+	ol := strings.ToLower(user.LastName)
+	fn := strings.ToLower(upd.FirstName)
+	ln := strings.ToLower(upd.LastName)
+
+	if err := trie.Remove(of, user.ID); err != nil {
+		return fmt.Errorf("error removing first name from trie: %v", err)
+	}
+	if err := trie.Remove(ol, user.ID); err != nil {
+		return fmt.Errorf("error removing lastname from trie: %v", err)
+	}
+	trie.Add(fn, user.ID)
+	trie.Add(ln, user.ID)
+	return nil
 }

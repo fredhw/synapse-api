@@ -8,6 +8,10 @@ docker rm -f mymongo
 export TLSCERT=/etc/letsencrypt/live/api.fredhw.me/fullchain.pem
 export TLSKEY=/etc/letsencrypt/live/api.fredhw.me/privkey.pem
 
+docker run --name devredis --network appnet -d redis
+docker run --name mymongo --network appnet -d -v ~/data:/data/db mongo
+
+
 docker run -d \
 -p 443:443 \
 --name gateway \
@@ -19,6 +23,3 @@ docker run -d \
 -e REDISADDR="devredis:6379" \
 -e DBADDR="mymongo:27017" \
 fredhw/gateway
-
-docker run --name mymongo --network appnet -d -v ~/data:/data/db mongo
-docker run --name devredis --network appnet -d redis

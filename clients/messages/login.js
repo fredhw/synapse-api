@@ -133,6 +133,8 @@ window.onload = function() {
         ajax.send(json);
     });
 
+    document.getElementById("sbar").addEventListener('input', doSearch, false);
+
     document.getElementById("logout").onclick = (function() {
         var ajax = new XMLHttpRequest();
 
@@ -152,6 +154,43 @@ window.onload = function() {
         }
         ajax.send();
     });
+}
+
+function doSearch() {
+    console.log("keyup");
+    var ajax = new XMLHttpRequest();
+    var sbar = document.getElementById("sbar");
+    var auth = localStorage.getItem("auth");
+    ajax.open("GET", "https://api.fredhw.me/v1/users?q=" + sbar.value, true);
+    ajax.setRequestHeader("Authorization", auth);
+    ajax.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status < 300) {
+            var json = JSON.parse(this.responseText);
+            console.log(json);
+            
+            var dropdown = document.getElementById("dropdown");
+            dropdown.innerHTML = "";
+            for (var i in json) {
+                var opt = document.createElement("div");
+                var username = document.createElement("h3");
+                username.innerHTML = json[i].userName;
+                var name = document.createElement("p");
+                name.innerHTML = json[i].firstName + " " + json[i].lastName;
+                var email = document.createElement("p");
+                email.innerHTML = json[i].email;
+                opt.appendChild(username);
+                opt.appendChild(name);
+                opt.appendChild(email);
+                opt.classList.add("opt");
+                dropdown.appendChild(opt);
+            }
+
+        } else if (this.readyState == 4 && this.status >= 300) {
+            var err = document.getElementById("err");
+            err.innerHTML = this.responseText;
+        }
+    }
+    ajax.send();
 }
 
 function loadName() {
