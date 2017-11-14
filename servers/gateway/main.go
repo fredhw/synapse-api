@@ -18,17 +18,6 @@ import (
 
 //main is the main entry point for the server
 func main() {
-	/* TODO: add code to do the following
-	- Read the ADDR environment variable to get the address
-	  the server should listen on. If empty, default to ":80"
-	- Create a new mux for the web server.
-	- Tell the mux to call your handlers.SummaryHandler function
-	  when the "/v1/summary" URL path is requested.
-	- Start a web server listening on the address you read from
-	  the environment variable, using the mux you created as
-	  the root handler. Use log.Fatal() to report any errors
-	  that occur when trying to start the web server.
-	*/
 
 	addr := os.Getenv("ADDR")
 	if len(addr) == 0 {
@@ -84,13 +73,3 @@ func main() {
 	fmt.Printf("server is listening on %s\n", addr)
 	log.Fatal(http.ListenAndServeTLS(addr, tlscert, tlskey, corsHandler))
 }
-
-// //UsersHandler lol
-// func UsersHandler(mongosess *mgo.Session, ctx *handlers.Context) func(http.ResponseWriter, *http.Request) {
-// 	if mongosess == nil {
-// 		panic("nil MongoDB session")
-// 	}
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		ctx.UsersHandler(w, r)
-// 	}
-// }
