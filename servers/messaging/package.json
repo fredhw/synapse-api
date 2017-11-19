@@ -4,13 +4,17 @@
   "description": "This directory contains the source code for your messaging microservice written in Node.js",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "express": "^4.16.2",
+    "index.js": "0.0.3",
+    "is-empty": "^1.2.0",
+    "live-server": "^1.2.0",
+    "moment": "^2.19.2",
     "mongodb": "^2.2.33",
     "morgan": "^1.9.0"
   }
