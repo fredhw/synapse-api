@@ -3,6 +3,7 @@ package users
 import (
 	"errors"
 
+	"github.com/challenges-fredhw/servers/gateway/indexes"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -29,4 +30,10 @@ type Store interface {
 
 	//Delete deletes the user with the given ID
 	Delete(userID bson.ObjectId) error
+
+	//GetByIDSlice returns all Users from a given slice of ids
+	GetByIDSlice(ids []bson.ObjectId) []*User
+
+	//GetAll loads all existing user accounts from the stor into a trie
+	GetAll(tr *indexes.Trie) error
 }

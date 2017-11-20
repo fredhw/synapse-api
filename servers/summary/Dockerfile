@@ -2,6 +2,6 @@
 # to create a Docker container image
 # for your Go API gateway server
 FROM scratch
-COPY gateway gateway
-EXPOSE 443
-ENTRYPOINT ["/gateway"]
+COPY summary summary
+EXPOSE 80
+ENTRYPOINT ["/summary"]

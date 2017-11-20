@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="login.css">
+    <title>Login</title>
+</head>
+<body>
+    <div id="login-view">
+        <form id="sign-up">
+            <fieldset>
+                <legend>Sign Up:</legend>
+                Email: <input id="su-email" type="text"><br>
+                Username: <input id="su-username" type="text"><br>
+                First Name: <input id="su-fname" type="text">
+                Last Name: <input id="su-lname" type="text"><br>
+                Password: <input id="su-password" type="password"><br>
+                Password Confirmation: <input id="su-passwordconf" type="password"><br>
+                <input type="submit" name="Submit">
+            </fieldset>
+        </form>
+        <form id="sign-in">
+            <fieldset>
+                <legend>Sign In:</legend>
+                Email: <input id="si-email" type="text"><br>
+                Password: <input id="si-password" type="password"><br>
+                <input type="submit" name="Submit">
+            </fieldset>
+        </form>
+    </div>
+
+    <div id="main-view">
+        <div>
+            <h1 id="mv-name"></h1>
+            <button id="edit-button" type="submit">Edit Name</button>
+        </div>
+        <button id="logout" type="submit">Logout</button>
+        <textarea id="sbar" placeholder="search users here..."></textarea>
+        <div id="dropdown"></div>
+    </div>
+
+    <div id="edit-view">
+        <form id="edit-name">
+            <fieldset>
+                <legend>Edit Name:</legend>
+                First Name: <input id="en-fname" type="text">
+                Last Name: <input id="en-lname" type="text"><br>
+                <input type="submit" name="Submit">
+            </fieldset>
+        </form>
+    </div>
+
+    <p id="err"></p>
+    <script src="login.js"></script>
+</body>
+</html>

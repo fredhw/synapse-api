@@ -41,7 +41,8 @@ func (ms *MemStore) Get(sid SessionID, state interface{}) error {
 		return ErrStateNotFound
 	}
 	//reset TTL
-	ms.entries.Set(sid.String(), j, 0)
+	ms.entries.Set(sid.String(), j, cache.DefaultExpiration)
+
 	return json.Unmarshal(j.([]byte), state)
 }
 

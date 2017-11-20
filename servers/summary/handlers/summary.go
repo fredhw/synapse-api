@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -45,54 +44,10 @@ type PageSummary struct {
 	Videos      []*PreviewVideo `json:"videos,omitempty"`
 }
 
-//SummaryHandler handles requests for the page summary API.
-//This API expects one query string parameter named `url`,
-//which should contain a URL to a web page. It responds with
-//a JSON-encoded PageSummary struct containing the page summary
-//meta-data.
-func SummaryHandler(w http.ResponseWriter, r *http.Request) {
-	
-	w.Header().Add("Content-Type", "application/json")
-	w.Header().Add("Access-Control-Allow-Origin", "*")
-
-	pageURL := r.FormValue("url")
-	if len(pageURL) == 0 {
-		http.Error(w, "please provide a url", http.StatusBadRequest)
-		return
-	}
-
-	respBody, err := fetchHTML(pageURL)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	summ, err := extractSummary(pageURL, respBody)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	defer respBody.Close()
-	json.NewEncoder(w).Encode(summ)
-}
-
 //fetchHTML fetches `pageURL` and returns the body stream or an error.
 //Errors are returned if the response status code is an error (>=400),
 //or if the content type indicates the URL is not an HTML page.
 func fetchHTML(pageURL string) (io.ReadCloser, error) {
-	/*TODO: Do an HTTP GET for the page URL. If the response status
-	code is >= 400, return a nil stream and an error. If the response
-	content type does not indicate that the content is a web page, return
-	a nil stream and an error. Otherwise return the response body and
-	no (nil) error.
-
-	To test your implementation of this function, run the TestFetchHTML
-	test in summary_test.go. You can do that directly in Visual Studio Code,
-	or at the command line by running:
-		go test -run TestFetchHTML
-
-	Helpful Links:
-	https://golang.org/pkg/net/http/#Get
-	*/
 	resp, err := http.Get(pageURL)
 	if err != nil {
 		return nil, err
@@ -115,21 +70,6 @@ func fetchHTML(pageURL string) (io.ReadCloser, error) {
 //extractSummary tokenizes the `htmlStream` and populates a PageSummary
 //struct with the page's summary meta-data.
 func extractSummary(pageURL string, htmlStream io.ReadCloser) (*PageSummary, error) {
-	/*TODO: tokenize the `htmlStream` and extract the page summary meta-data
-	according to the assignment description.
-
-	To test your implementation of this function, run the TestExtractSummary
-	test in summary_test.go. You can do that directly in Visual Studio Code,
-	or at the command line by running:
-		go test -run TestExtractSummary
-
-	Helpful Links:
-	https://drstearns.github.io/tutorials/tokenizing/
-	http://ogp.me/
-	https://developers.facebook.com/docs/reference/opengraph/
-	https://golang.org/pkg/net/url/#URL.ResolveReference
-	*/
-
 	base, _ := url.Parse(pageURL)
 	tokenizer := html.NewTokenizer(htmlStream)
 	summ := PageSummary{}
