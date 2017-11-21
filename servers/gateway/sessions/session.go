@@ -29,9 +29,11 @@ func BeginSession(signingKey string, store Store, sessionState interface{}, w ht
 	//  (note the constants declared for you above, which will help you avoid typos)
 	sid, err := NewSessionID(signingKey)
 	if err != nil {
-		return InvalidSessionID, ErrNoSessionID
+		return InvalidSessionID, err
 	}
-	store.Save(sid, sessionState)
+	if err := store.Save(sid, sessionState); err != nil {
+		return InvalidSessionID, err
+	}
 
 	val := fmt.Sprintf("%v%v", schemeBearer, string(sid))
 
@@ -60,7 +62,7 @@ func GetSessionID(r *http.Request, signingKey string) (SessionID, error) {
 
 	sid, err := ValidateID(val, signingKey)
 	if err != nil {
-		return InvalidSessionID, ErrInvalidID
+		return InvalidSessionID, err
 	}
 	return sid, nil
 }
@@ -75,8 +77,7 @@ func GetState(r *http.Request, signingKey string, store Store, sessionState inte
 	if err != nil {
 		return InvalidSessionID, err
 	}
-	err = store.Get(sid, sessionState)
-	if err != nil {
+	if err := store.Get(sid, sessionState); err != nil {
 		return InvalidSessionID, err
 	}
 	return sid, nil
