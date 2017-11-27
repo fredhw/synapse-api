@@ -42,6 +42,7 @@ func main() {
 		log.Fatal("please set SESSIONKEY")
 	}
 
+	//redis
 	redisAddr := os.Getenv("REDISADDR")
 	if len(redisAddr) == 0 {
 		redisAddr = "redis:6379"
@@ -52,6 +53,7 @@ func main() {
 	})
 	redisStore := sessions.NewRedisStore(client, 0)
 
+	//mongodb
 	dbAddr := os.Getenv("DBADDR")
 	if len(dbAddr) == 0 {
 		dbAddr = "mymongo:27017"
@@ -65,6 +67,7 @@ func main() {
 	}
 	mongoStore := users.NewMongoStore(sess, "mgo", "users")
 
+	//microservices
 	messageSvcAddrs := os.Getenv("MESSAGESSVC_ADDRS")
 	splitMessageSvcAddrs := strings.Split(messageSvcAddrs, ",")
 	if len(splitMessageSvcAddrs) == 0 {
@@ -76,6 +79,8 @@ func main() {
 	if len(splitSummarySvcAddrs) == 0 {
 		splitSummarySvcAddrs = append(splitSummarySvcAddrs, ":80")
 	}
+
+	//handlers
 
 	handlerCtx := handlers.NewHandlerContext(sskey, mongoStore, redisStore)
 
@@ -92,6 +97,10 @@ func main() {
 	mux.Handle("/v1/channels/", handlerCtx.NewServiceProxy(splitMessageSvcAddrs))
 	mux.Handle("/v1/messages/", handlerCtx.NewServiceProxy(splitMessageSvcAddrs))
 	mux.Handle("/v1/summary/", handlerCtx.NewServiceProxy(splitSummarySvcAddrs))
+
+	notifier := handlers.NewNotifier()
+
+	mux.Handle("/v1/ws", handlers.NewWebSocketsHandler(notifier, handlerCtx))
 
 	corsHandler := handlers.NewCORSHandler(mux)
 

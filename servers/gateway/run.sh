@@ -15,6 +15,7 @@ docker rm -f messaging3
 export TLSCERT=/etc/letsencrypt/live/api.fredhw.me/fullchain.pem
 export TLSKEY=/etc/letsencrypt/live/api.fredhw.me/privkey.pem
 export DBADDR="mymongo:27017"
+export MQADDR="devrabbit:5672"
 
 docker run -d \
 --name devredis \
@@ -62,6 +63,7 @@ docker run -d \
 -e SESSIONKEY="testing" \
 -e REDISADDR="devredis:6379" \
 -e DBADDR=$DBADDR \
+-e MQADDR=$MQADDR \
 -e MESSAGESSVC_ADDRS=messaging1,messaging2,messaging3 \
 -e SUMMARYSVC_ADDRS=summary1,summary2 \
 fredhw/gateway

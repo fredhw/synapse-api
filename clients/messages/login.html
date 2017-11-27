@@ -39,6 +39,49 @@
         <button id="logout" type="submit">Logout</button>
         <textarea id="sbar" placeholder="search users here..."></textarea>
         <div id="dropdown"></div>
+        
+        <form id="channel-new">
+            <fieldset>
+                <legend>New Channel</legend>
+                Name: <input id="ch-new-name" type="text">
+                Description: <input id="ch-new-desc" type="text"><br>
+                <input type="submit" name="Submit">
+            </fieldset>
+        </form>
+
+        <h3>Click on a channel's name to see messages</h3>
+
+        <ul id="channel-list"></ul>
+        <input id="ch-id" type="hidden" value="">
+
+        <form id="channel-update">
+            <fieldset>
+                <legend>Update Channel</legend>
+                Name: <input id="ch-upd-name" type="text">
+                Description: <input id="ch-upd-desc" type="text"><br>
+                <input type="submit" name="Submit">
+            </fieldset>
+        </form>
+
+        <ul id="message-list"></ul>
+        <input id="ms-id" type="hidden" value="">
+
+        <form id="message-update">
+            <fieldset>
+                <legend>Update Message</legend>
+                Message: <input id="ms-upd-body" type="text">
+                <input type="submit" name="Submit">
+            </fieldset>
+        </form>
+
+        <form id="message-post">
+            <fieldset>
+                <legend>Post a Message!</legend>
+                <input id="ms-post-body" type="text">
+                <input type="submit" name="Submit">
+            </fieldset>
+        </form>
+
     </div>
 
     <div id="edit-view">
