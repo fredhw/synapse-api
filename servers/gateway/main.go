@@ -67,7 +67,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to dial mongodb: %v", err)
 	}
-	mongoStore := users.NewMongoStore(sess, "mgo", "content")
+	mongoStore := users.NewMongoStore(sess, "mgo", "users")
 
 	handlerCtx := handlers.NewHandlerContext(sskey, mongoStore, redisStore)
 
@@ -77,6 +77,7 @@ func main() {
 	mux.HandleFunc("/v1/users/me/", handlerCtx.UsersMeHandler)
 	mux.HandleFunc("/v1/sessions/", handlerCtx.SessionsHandler)
 	mux.HandleFunc("/v1/sessions/mine/", handlerCtx.SessionsMineHandler)
+	mux.HandleFunc("/v1/users", handlerCtx.SearchHandler)
 
 	corsHandler := handlers.NewCORSHandler(mux)
 
