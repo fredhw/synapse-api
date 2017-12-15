@@ -3,8 +3,11 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"net/http/httputil"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/challenges-fredhw/servers/gateway/indexes"
@@ -221,6 +224,33 @@ func (ctx *Context) SearchHandler(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, "method must be GET", http.StatusMethodNotAllowed)
 		return
+	}
+}
+
+//NewServiceProxy uses addresses to create reverse proxies for microservices
+func (ctx *Context) NewServiceProxy(addrs []string) *httputil.ReverseProxy {
+	nextIndex := 0
+	mx := sync.Mutex{}
+	return &httputil.ReverseProxy{
+		Director: func(r *http.Request) {
+			state := &sessionState{}
+			sessions.GetState(r, ctx.signingKey, ctx.sessionStore, state)
+			if state.User != nil {
+				userJSON, err := json.Marshal(state.User)
+				if err != nil {
+					log.Printf("error marshaling user: %v", err)
+				}
+				r.Header.Add("X-User", string(userJSON))
+			} else {
+				r.Header.Del("X-User")
+			}
+
+			mx.Lock()
+			r.URL.Host = addrs[nextIndex%len(addrs)]
+			nextIndex++
+			mx.Unlock()
+			r.URL.Scheme = "http"
+		},
 	}
 }
 

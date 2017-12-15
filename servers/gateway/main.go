@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"gopkg.in/mgo.v2"
 
@@ -16,19 +17,14 @@ import (
 	"github.com/challenges-fredhw/servers/gateway/handlers"
 )
 
+//RootHandler handles requests for the root resource
+func RootHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "text/plain")
+	fmt.Fprintf(w, "Hello from the gateway! Try requesting /v1/summary/")
+}
+
 //main is the main entry point for the server
 func main() {
-	/* TODO: add code to do the following
-	- Read the ADDR environment variable to get the address
-	  the server should listen on. If empty, default to ":80"
-	- Create a new mux for the web server.
-	- Tell the mux to call your handlers.SummaryHandler function
-	  when the "/v1/summary" URL path is requested.
-	- Start a web server listening on the address you read from
-	  the environment variable, using the mux you created as
-	  the root handler. Use log.Fatal() to report any errors
-	  that occur when trying to start the web server.
-	*/
 
 	addr := os.Getenv("ADDR")
 	if len(addr) == 0 {
@@ -69,28 +65,36 @@ func main() {
 	}
 	mongoStore := users.NewMongoStore(sess, "mgo", "users")
 
+	messageSvcAddrs := os.Getenv("MESSAGESSVC_ADDRS")
+	splitMessageSvcAddrs := strings.Split(messageSvcAddrs, ",")
+	if len(splitMessageSvcAddrs) == 0 {
+		splitMessageSvcAddrs = append(splitMessageSvcAddrs, ":80")
+	}
+
+	summarySvcAddrs := os.Getenv("SUMMARYSVC_ADDRS")
+	splitSummarySvcAddrs := strings.Split(summarySvcAddrs, ",")
+	if len(splitSummarySvcAddrs) == 0 {
+		splitSummarySvcAddrs = append(splitSummarySvcAddrs, ":80")
+	}
+
 	handlerCtx := handlers.NewHandlerContext(sskey, mongoStore, redisStore)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/v1/summary/", handlers.SummaryHandler)
+	mux.HandleFunc("/", RootHandler)
+
 	mux.HandleFunc("/v1/users/", handlerCtx.UsersHandler)
 	mux.HandleFunc("/v1/users/me/", handlerCtx.UsersMeHandler)
 	mux.HandleFunc("/v1/sessions/", handlerCtx.SessionsHandler)
 	mux.HandleFunc("/v1/sessions/mine/", handlerCtx.SessionsMineHandler)
 	mux.HandleFunc("/v1/users", handlerCtx.SearchHandler)
 
+	mux.Handle("/v1/channels", handlerCtx.NewServiceProxy(splitMessageSvcAddrs))
+	mux.Handle("/v1/channels/", handlerCtx.NewServiceProxy(splitMessageSvcAddrs))
+	mux.Handle("/v1/messages/", handlerCtx.NewServiceProxy(splitMessageSvcAddrs))
+	mux.Handle("/v1/summary/", handlerCtx.NewServiceProxy(splitSummarySvcAddrs))
+
 	corsHandler := handlers.NewCORSHandler(mux)
 
 	fmt.Printf("server is listening on %s\n", addr)
 	log.Fatal(http.ListenAndServeTLS(addr, tlscert, tlskey, corsHandler))
 }
-
-// //UsersHandler lol
-// func UsersHandler(mongosess *mgo.Session, ctx *handlers.Context) func(http.ResponseWriter, *http.Request) {
-// 	if mongosess == nil {
-// 		panic("nil MongoDB session")
-// 	}
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		ctx.UsersHandler(w, r)
-// 	}
-// }
