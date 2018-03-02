@@ -77,6 +77,12 @@ func main() {
 		splitSummarySvcAddrs = append(splitSummarySvcAddrs, ":80")
 	}
 
+	qeegSvcAddrs := os.Getenv("QEEGSVC_ADDRS")
+	splitQeegSvcAddrs := strings.Split(qeegSvcAddrs, ",")
+	if len(splitQeegSvcAddrs) == 0 {
+		splitQeegSvcAddrs = append(splitQeegSvcAddrs, ":80")
+	}
+
 	handlerCtx := handlers.NewHandlerContext(sskey, mongoStore, redisStore)
 
 	mux := http.NewServeMux()
@@ -92,6 +98,7 @@ func main() {
 	mux.Handle("/v1/channels/", handlerCtx.NewServiceProxy(splitMessageSvcAddrs))
 	mux.Handle("/v1/messages/", handlerCtx.NewServiceProxy(splitMessageSvcAddrs))
 	mux.Handle("/v1/summary/", handlerCtx.NewServiceProxy(splitSummarySvcAddrs))
+	mux.Handle("/v1/qeeg/", handlerCtx.NewServiceProxy(splitQeegSvcAddrs))
 
 	corsHandler := handlers.NewCORSHandler(mux)
 

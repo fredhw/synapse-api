@@ -19,3 +19,9 @@ docker push fredhw/summary
 go clean
 
 cd -
+
+cd ../qeeg-api
+docker build -t fredhw/qeeg-api .
+docker push fredhw/qeeg-api
+
+cd -
