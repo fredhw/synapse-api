@@ -4,3 +4,4 @@ run.sh
 deploy.sh
 README.md
 node_modules
+eeg-aws

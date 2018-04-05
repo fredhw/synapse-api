@@ -15,8 +15,8 @@ docker rm -f messaging3
 docker rm -f qeeg1
 docker rm -f qeeg2
 
-export TLSCERT=/etc/letsencrypt/live/api.fredhw.me/fullchain.pem
-export TLSKEY=/etc/letsencrypt/live/api.fredhw.me/privkey.pem
+export TLSCERT=/etc/letsencrypt/live/api.synapse-solutions.net/fullchain.pem
+export TLSKEY=/etc/letsencrypt/live/api.synapse-solutions.net/privkey.pem
 export DBADDR="mymongo:27017"
 
 docker run -d \
@@ -79,3 +79,4 @@ docker run -d \
 -e SUMMARYSVC_ADDRS=summary1,summary2 \
 -e QEEGSVC_ADDRS=qeeg1,qeeg2 \
 fredhw/gateway
+

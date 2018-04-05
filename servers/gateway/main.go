@@ -98,7 +98,9 @@ func main() {
 	mux.Handle("/v1/channels/", handlerCtx.NewServiceProxy(splitMessageSvcAddrs))
 	mux.Handle("/v1/messages/", handlerCtx.NewServiceProxy(splitMessageSvcAddrs))
 	mux.Handle("/v1/summary/", handlerCtx.NewServiceProxy(splitSummarySvcAddrs))
-	mux.Handle("/v1/qeeg/", handlerCtx.NewServiceProxy(splitQeegSvcAddrs))
+	mux.Handle("/v1/hello", handlerCtx.NewServiceProxy(splitQeegSvcAddrs))
+	mux.Handle("/v1/spectrum/", handlerCtx.NewServiceProxy(splitQeegSvcAddrs))
+	mux.Handle("/v1/sumfile/", handlerCtx.NewServiceProxy(splitQeegSvcAddrs))
 
 	corsHandler := handlers.NewCORSHandler(mux)
 

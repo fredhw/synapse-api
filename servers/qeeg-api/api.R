@@ -39,8 +39,8 @@ version = "3.1.3"
 
 library(e1071)
 library(pracma)
-library(plumber)
-library(jsonlite)
+# library(plumber)
+# library(jsonlite)
 
 #* @filter cors
 cors <- function(res) {
@@ -56,7 +56,7 @@ function(msg=""){
   list(msg = paste0("The message is: '", msg, "'"))
 }
 
-#' @get /hello
+#' @get /v1/hello
 #' @preempt cors
 #' @html
 function(){
@@ -67,7 +67,7 @@ function(){
 #' @param subject The message to echo back.
 #' @param session The session name
 #' @preempt cors
-#' @get /summary
+#' @get /v1/sumfile/
 function(subject, session, sampling=128, window=2, sliding=0.75) {	
   channels <- c("AF3", "F7", "F3", "FC5", 
                 "T7", "P7", "O1", "O2", 
@@ -136,7 +136,7 @@ function(subject, session, sampling=128, window=2, sliding=0.75) {
 #' @param subject The message to echo back.
 #' @param session The session name
 #' @preempt cors
-#' @get /spectrum
+#' @get /v1/spectrum/
 #' @png
 function(ch, subject, session, sampling=128, window=2, sliding=0.75) {	
   channels <- c("AF3", "F7", "F3", "FC5", 
