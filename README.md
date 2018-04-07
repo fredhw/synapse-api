@@ -151,6 +151,8 @@ Returns a png image of the specified channel data plotted in a spectogram along 
 - session     `string`  `required`
 - ch          `string`  `required`
 
+![spectrum
+ plot](https://github.com/fredhw/synapse-api/blob/master/servers/qeeg-api/example_spectrum.jpg)
 
 ## Authors
 
