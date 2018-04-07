@@ -453,7 +453,7 @@ analyze.logfile <- function(subject, session, sampling=128, window=2, sliding=0.
 	
 	if ( file.exists(file) ) {
 		data <- read.table(file, header=T)
-	  samples <- dim(data)[1]
+	    samples <- dim(data)[1]
 		result <- list("Subject"=subject, "Version" = version, "Session"=session, "Sampling"=sampling,
 		               "Window"=window, "Sliding"=sliding, "Duration" = (samples / sampling), "Blinks" = "NA")
 		
