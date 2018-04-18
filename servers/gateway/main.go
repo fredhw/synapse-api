@@ -9,12 +9,12 @@ import (
 
 	"gopkg.in/mgo.v2"
 
-	"github.com/challenges-fredhw/servers/gateway/models/users"
-	"github.com/challenges-fredhw/servers/gateway/sessions"
+	"github.com/synapse-api/servers/gateway/models/users"
+	"github.com/synapse-api/servers/gateway/sessions"
 
 	"github.com/go-redis/redis"
 
-	"github.com/challenges-fredhw/servers/gateway/handlers"
+	"github.com/synapse-api/servers/gateway/handlers"
 )
 
 //RootHandler handles requests for the root resource
@@ -93,6 +93,7 @@ func main() {
 	mux.HandleFunc("/v1/sessions/", handlerCtx.SessionsHandler)
 	mux.HandleFunc("/v1/sessions/mine/", handlerCtx.SessionsMineHandler)
 	mux.HandleFunc("/v1/users", handlerCtx.SearchHandler)
+	mux.HandleFunc("/v1/upload", handlerCtx.FileHandler)
 
 	mux.Handle("/v1/channels", handlerCtx.NewServiceProxy(splitMessageSvcAddrs))
 	mux.Handle("/v1/channels/", handlerCtx.NewServiceProxy(splitMessageSvcAddrs))
@@ -106,6 +107,12 @@ func main() {
 
 	corsHandler := handlers.NewCORSHandler(mux)
 
+	dir, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("failed to get working directory: %v", err)
+	}
+
+	fmt.Printf("current directory %s\n", dir)
 	fmt.Printf("server is listening on %s\n", addr)
 	log.Fatal(http.ListenAndServeTLS(addr, tlscert, tlskey, corsHandler))
 }

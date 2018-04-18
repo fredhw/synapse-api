@@ -3,7 +3,7 @@ package handlers
 import (
 	"time"
 
-	"github.com/challenges-fredhw/servers/gateway/models/users"
+	"github.com/synapse-api/servers/gateway/models/users"
 )
 
 //TODO: define a session state struct for this web server

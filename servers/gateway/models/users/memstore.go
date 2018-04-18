@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/challenges-fredhw/servers/gateway/indexes"
+	"github.com/synapse-api/servers/gateway/indexes"
 	"github.com/patrickmn/go-cache"
 	"gopkg.in/mgo.v2/bson"
 )

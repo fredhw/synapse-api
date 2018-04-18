@@ -9,10 +9,12 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"io/ioutil"
+	"mime/multipart"
 
-	"github.com/challenges-fredhw/servers/gateway/indexes"
-	"github.com/challenges-fredhw/servers/gateway/models/users"
-	"github.com/challenges-fredhw/servers/gateway/sessions"
+	"github.com/synapse-api/servers/gateway/indexes"
+	"github.com/synapse-api/servers/gateway/models/users"
+	"github.com/synapse-api/servers/gateway/sessions"
 )
 
 //TODO: define HTTP handler functions as described in the
@@ -291,4 +293,58 @@ func addAndRemove(user *users.User, trie *indexes.Trie, upd *users.Updates) erro
 	trie.Add(fn, user.ID)
 	trie.Add(ln, user.ID)
 	return nil
+}
+
+// FileHandler uploads a file to the server
+func (ctx *Context) FileHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+    case "POST":
+        state := &sessionState{}
+		if _, err := sessions.GetState(r, ctx.signingKey, ctx.sessionStore, state); err != nil {
+			http.Error(w, fmt.Sprintf("error retrieving session state: %v", err), http.StatusInternalServerError)
+			return
+		}
+        fmt.Println("uploaded file")
+
+        file, handle, err := r.FormFile("file")
+        if err != nil {
+            fmt.Fprintf(w, "%v", err)
+            return
+        }
+        defer file.Close()
+		
+		fmt.Println("file parsed")
+
+		mimeType := handle.Header.Get("Content-Type")
+		fmt.Printf("checking filetype: %v\n", mimeType)
+
+        // switch mimeType {
+        // case "image/jpeg":
+        //     saveFile(w, file, handle)
+        // case "image/png":
+        saveFile(w, file, handle)
+		
+        w.WriteHeader(http.StatusCreated)
+		respond(w, state.User)
+		
+    default:
+		http.Error(w, "method must be POST", http.StatusMethodNotAllowed)
+		return
+	}
+}
+
+func saveFile(w http.ResponseWriter, file multipart.File, handle *multipart.FileHeader) {
+	fmt.Printf("saving file: %v", handle.Filename)
+
+    data, err := ioutil.ReadAll(file)
+    if err != nil {
+        fmt.Fprintf(w, "%v", err)
+        return
+    }
+
+    err = ioutil.WriteFile("/root/gateway/raw-data/"+handle.Filename, data, 0666)
+    if err != nil {
+        fmt.Fprintf(w, "%v", err)
+        return
+    }
 }

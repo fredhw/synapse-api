@@ -3,7 +3,7 @@ package users
 import (
 	"strings"
 
-	"github.com/challenges-fredhw/servers/gateway/indexes"
+	"github.com/synapse-api/servers/gateway/indexes"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )

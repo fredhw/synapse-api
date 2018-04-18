@@ -3,9 +3,9 @@ package handlers
 import (
 	"log"
 
-	"github.com/challenges-fredhw/servers/gateway/indexes"
-	"github.com/challenges-fredhw/servers/gateway/models/users"
-	"github.com/challenges-fredhw/servers/gateway/sessions"
+	"github.com/synapse-api/servers/gateway/indexes"
+	"github.com/synapse-api/servers/gateway/models/users"
+	"github.com/synapse-api/servers/gateway/sessions"
 )
 
 //TODO: define a handler context struct that

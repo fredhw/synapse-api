@@ -35,7 +35,7 @@ function(subject, session, sampling=128, window=2, sliding=0.75) {
                 "P8", "T8", "FC6", "F4", 
                 "F8", "AF4")
   
-	file <- paste(subject, "_", session, ".txt", sep="")
+	file <- paste("./raw-data/",subject, "_", session, ".txt", sep="")
   
 	if ( file.exists(file) ) {
 		data <- read.table(file, header=T)
@@ -72,31 +72,31 @@ function(subject, session, sampling=128, window=2, sliding=0.75) {
 			result[paste("Meta", ch, "SpectralQuality", sep="_")] <- spectral.quality(spectrum)
 		}
 		
-		## Coherence analysis
-		for (i in  1 : (length(channels) - 1)) {
-			for (j in  (i + 1) : length(channels)) {
-				ch1 <- channels[i]
-				ch2 <- channels[j]
+		# ## Coherence analysis
+		# for (i in  1 : (length(channels) - 1)) {
+		# 	for (j in  (i + 1) : length(channels)) {
+		# 		ch1 <- channels[i]
+		# 		ch2 <- channels[j]
 				
-				ts1 <- data[[ch1]]
-				ts2 <- data[[ch2]]
+		# 		ts1 <- data[[ch1]]
+		# 		ts2 <- data[[ch2]]
 				
-				ts1 <- ts1[1 : samples]
-				ts2 <- ts2[1 : samples]
+		# 		ts1 <- ts1[1 : samples]
+		# 		ts2 <- ts2[1 : samples]
 				
-				qty1 <- data[[paste(ch1, "Q", sep="_")]]
-				qty1 <- qty1[1 : samples]
+		# 		qty1 <- data[[paste(ch1, "Q", sep="_")]]
+		# 		qty1 <- qty1[1 : samples]
 				
-				qty2 <- data[[paste(ch2, "Q", sep="_")]]
-				qty2 <- qty2[1 : samples]
-				#print(paste("Coherence", ch1, ch2))
-				cohr <- coherence.analysis(ts1, ts2, sampling, length=window, sliding=0.75, hamming=T,
-												x=x, y=y, blink=blink, quality1=qty1, quality2=qty2)
-				for (j in 1:length(band.names)) {
-					result[paste(ch1, ch2, "_coherence_mean_", band.names[j], "_power", sep="")] <- mean.coherence(cohr, bands[j,])
-				}
-			}
-		}
+		# 		qty2 <- data[[paste(ch2, "Q", sep="_")]]
+		# 		qty2 <- qty2[1 : samples]
+		# 		#print(paste("Coherence", ch1, ch2))
+		# 		cohr <- coherence.analysis(ts1, ts2, sampling, length=window, sliding=0.75, hamming=T,
+		# 										x=x, y=y, blink=blink, quality1=qty1, quality2=qty2)
+		# 		for (j in 1:length(band.names)) {
+		# 			result[paste(ch1, ch2, "_coherence_mean_", band.names[j], "_power", sep="")] <- mean.coherence(cohr, bands[j,])
+		# 		}
+		# 	}
+		# }
     
     	result
     

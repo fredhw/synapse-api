@@ -58,11 +58,13 @@ fredhw/messaging
 docker run -d \
 --name qeeg1 \
 --network appnet \
+-v ~/raw-data:/app/raw-data \
 fredhw/qeeg-api
 
 docker run -d \
 --name qeeg2 \
 --network appnet \
+-v ~/raw-data:/app/raw-data \
 fredhw/qeeg-api
 
 docker run -d \
@@ -70,6 +72,7 @@ docker run -d \
 --name gateway \
 --network appnet \
 -v /etc/letsencrypt:/etc/letsencrypt:ro \
+-v ~/raw-data:/root/gateway/raw-data \
 -e TLSCERT=$TLSCERT \
 -e TLSKEY=$TLSKEY \
 -e SESSIONKEY="testing" \
