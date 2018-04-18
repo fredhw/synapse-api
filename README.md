@@ -47,6 +47,11 @@ Complete list of currently available params. Take a look to each specific endpoi
 - **window**      `int`         - the duration (in seconds) of each segment (epoch) used as the bases of the FFT analysis. Default: 2 seconds.
 - **sliding**     `float`       - the proportion of each segment that does not overlap with the previous segment. In other words, the proportion of overlap between adjacent segments is (1 - sliding). It needs to be a number between 0 and 1 (not a percentage!). Default: 0.75.
 
+#### POST /v1/upload
+Content-Type: `multipart/form-data`
+
+Uploads a selected file into the `raw-data` folder on the server. Files are parsed with `r.FormFile("file")` in Golang.
+
 #### GET /v1/sumfile
 Content-Type: `application/json`
 
