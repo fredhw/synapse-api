@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"strings"
+	"os"
 	"sync"
 	"time"
 	"io/ioutil"
@@ -295,16 +296,40 @@ func addAndRemove(user *users.User, trie *indexes.Trie, upd *users.Updates) erro
 	return nil
 }
 
+
+// Files struct has
+type Files struct {
+	FileNames    []string      `json:"fileNames,omitempty"`
+	User         *users.User   `json:"user,omitempty"`
+}
+
 // FileHandler uploads a file to the server
 func (ctx *Context) FileHandler(w http.ResponseWriter, r *http.Request) {
+
+	state := &sessionState{}
+	if _, err := sessions.GetState(r, ctx.signingKey, ctx.sessionStore, state); err != nil {
+		http.Error(w, fmt.Sprintf("error retrieving session state: %v", err), http.StatusInternalServerError)
+		return
+	}
 	switch r.Method {
-    case "POST":
-        state := &sessionState{}
-		if _, err := sessions.GetState(r, ctx.signingKey, ctx.sessionStore, state); err != nil {
-			http.Error(w, fmt.Sprintf("error retrieving session state: %v", err), http.StatusInternalServerError)
-			return
+	case "GET":
+		fmt.Println("fetching files...")
+		files, err := ioutil.ReadDir("/root/gateway/raw-data")
+		if err != nil {
+			log.Fatal(err)
 		}
-        fmt.Println("uploaded file")
+
+		ot := Files{}
+		ot.User = state.User
+
+		for _, f := range files {
+			ot.FileNames = append(ot.FileNames, f.Name())
+		}
+
+		respond(w, ot)
+
+    case "POST":
+        fmt.Println("uploading...")
 
         file, handle, err := r.FormFile("file")
         if err != nil {
@@ -318,23 +343,64 @@ func (ctx *Context) FileHandler(w http.ResponseWriter, r *http.Request) {
 		mimeType := handle.Header.Get("Content-Type")
 		fmt.Printf("checking filetype: %v\n", mimeType)
 
-        // switch mimeType {
-        // case "image/jpeg":
-        //     saveFile(w, file, handle)
-        // case "image/png":
+		files, err := ioutil.ReadDir("/root/gateway/raw-data")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		var dupeFile string
+
+		for _, f := range files {
+			if f.Name() == handle.Filename {
+				dupeFile = f.Name()
+			}
+		}
+
+		if len(dupeFile) > 0 {
+			fmt.Println("dupe found, removing")
+			deleteFile(w, dupeFile)
+		}
+
         saveFile(w, file, handle)
 		
         w.WriteHeader(http.StatusCreated)
 		respond(w, state.User)
+	
+	case "DELETE":
+		fmt.Println("deleting...")
+
+		val := r.Header.Get("filename")
+
+		if len(val) == 0 {
+			http.Error(w, "no file specified", http.StatusUnauthorized)
+			return
+		}
+
+		files, err := ioutil.ReadDir("/root/gateway/raw-data")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		var deleteFileName string
+
+		for _, f := range files {
+			if f.Name() == val {
+				deleteFileName = f.Name()
+			}
+		}
 		
+		deleteFile(w, deleteFileName)
+
+		respond(w, state.User)
+
     default:
-		http.Error(w, "method must be POST", http.StatusMethodNotAllowed)
+		http.Error(w, "method must be GET, POST, PATCH, or DELETE", http.StatusMethodNotAllowed)
 		return
 	}
 }
 
 func saveFile(w http.ResponseWriter, file multipart.File, handle *multipart.FileHeader) {
-	fmt.Printf("saving file: %v", handle.Filename)
+	fmt.Printf("saving file: %v\n", handle.Filename)
 
     data, err := ioutil.ReadAll(file)
     if err != nil {
@@ -347,4 +413,21 @@ func saveFile(w http.ResponseWriter, file multipart.File, handle *multipart.File
         fmt.Fprintf(w, "%v", err)
         return
     }
+}
+
+func deleteFile(w http.ResponseWriter, deleteFileName string) {
+	if len(deleteFileName) == 0 {
+		http.Error(w, "file not found", http.StatusUnauthorized)
+		return
+	}
+
+	fullpath := fmt.Sprintf("/root/gateway/raw-data/%s", deleteFileName)
+	//fmt.Printf("fullpath: %v\n", fullpath)
+
+	if err := os.Remove(fullpath); err != nil {
+		fmt.Fprintf(w, "%v", err)
+		return
+	}
+
+	fmt.Println("deleted")
 }
