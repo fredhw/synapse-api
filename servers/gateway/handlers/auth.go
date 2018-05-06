@@ -7,11 +7,8 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"strings"
-	"os"
 	"sync"
 	"time"
-	"io/ioutil"
-	"mime/multipart"
 
 	"github.com/synapse-api/servers/gateway/indexes"
 	"github.com/synapse-api/servers/gateway/models/users"
@@ -297,137 +294,137 @@ func addAndRemove(user *users.User, trie *indexes.Trie, upd *users.Updates) erro
 }
 
 
-// Files struct has
-type Files struct {
-	FileNames    []string      `json:"fileNames,omitempty"`
-	User         *users.User   `json:"user,omitempty"`
-}
+// // Files struct has
+// type Files struct {
+// 	FileNames    []string      `json:"fileNames,omitempty"`
+// 	User         *users.User   `json:"user,omitempty"`
+// }
 
-// FileHandler uploads a file to the server
-func (ctx *Context) FileHandler(w http.ResponseWriter, r *http.Request) {
+// // FileHandler uploads a file to the server
+// func (ctx *Context) FileHandler(w http.ResponseWriter, r *http.Request) {
 
-	state := &sessionState{}
-	if _, err := sessions.GetState(r, ctx.signingKey, ctx.sessionStore, state); err != nil {
-		http.Error(w, fmt.Sprintf("error retrieving session state: %v", err), http.StatusInternalServerError)
-		return
-	}
-	switch r.Method {
-	case "GET":
-		fmt.Println("fetching files...")
-		files, err := ioutil.ReadDir("/root/gateway/raw-data")
-		if err != nil {
-			log.Fatal(err)
-		}
+// 	state := &sessionState{}
+// 	if _, err := sessions.GetState(r, ctx.signingKey, ctx.sessionStore, state); err != nil {
+// 		http.Error(w, fmt.Sprintf("error retrieving session state: %v", err), http.StatusInternalServerError)
+// 		return
+// 	}
+// 	switch r.Method {
+// 	case "GET":
+// 		fmt.Println("fetching files...")
+// 		files, err := ioutil.ReadDir("/root/gateway/raw-data")
+// 		if err != nil {
+// 			log.Fatal(err)
+// 		}
 
-		ot := Files{}
-		ot.User = state.User
+// 		ot := Files{}
+// 		ot.User = state.User
 
-		for _, f := range files {
-			ot.FileNames = append(ot.FileNames, f.Name())
-		}
+// 		for _, f := range files {
+// 			ot.FileNames = append(ot.FileNames, f.Name())
+// 		}
 
-		respond(w, ot)
+// 		respond(w, ot)
 
-    case "POST":
-        fmt.Println("uploading...")
+//     case "POST":
+//         fmt.Println("uploading...")
 
-        file, handle, err := r.FormFile("file")
-        if err != nil {
-            fmt.Fprintf(w, "%v", err)
-            return
-        }
-        defer file.Close()
+//         file, handle, err := r.FormFile("file")
+//         if err != nil {
+//             fmt.Fprintf(w, "%v", err)
+//             return
+//         }
+//         defer file.Close()
 		
-		fmt.Println("file parsed")
+// 		fmt.Println("file parsed")
 
-		mimeType := handle.Header.Get("Content-Type")
-		fmt.Printf("checking filetype: %v\n", mimeType)
+// 		mimeType := handle.Header.Get("Content-Type")
+// 		fmt.Printf("checking filetype: %v\n", mimeType)
 
-		files, err := ioutil.ReadDir("/root/gateway/raw-data")
-		if err != nil {
-			log.Fatal(err)
-		}
+// 		files, err := ioutil.ReadDir("/root/gateway/raw-data")
+// 		if err != nil {
+// 			log.Fatal(err)
+// 		}
 
-		var dupeFile string
+// 		var dupeFile string
 
-		for _, f := range files {
-			if f.Name() == handle.Filename {
-				dupeFile = f.Name()
-			}
-		}
+// 		for _, f := range files {
+// 			if f.Name() == handle.Filename {
+// 				dupeFile = f.Name()
+// 			}
+// 		}
 
-		if len(dupeFile) > 0 {
-			fmt.Println("dupe found, removing")
-			deleteFile(w, dupeFile)
-		}
+// 		if len(dupeFile) > 0 {
+// 			fmt.Println("dupe found, removing")
+// 			deleteFile(w, dupeFile)
+// 		}
 
-        saveFile(w, file, handle)
+//         saveFile(w, file, handle)
 		
-        w.WriteHeader(http.StatusCreated)
-		respond(w, state.User)
+//         w.WriteHeader(http.StatusCreated)
+// 		respond(w, state.User)
 	
-	case "DELETE":
-		fmt.Println("deleting...")
+// 	case "DELETE":
+// 		fmt.Println("deleting...")
 
-		val := r.Header.Get("filename")
+// 		val := r.Header.Get("filename")
 
-		if len(val) == 0 {
-			http.Error(w, "no file specified", http.StatusUnauthorized)
-			return
-		}
+// 		if len(val) == 0 {
+// 			http.Error(w, "no file specified", http.StatusUnauthorized)
+// 			return
+// 		}
 
-		files, err := ioutil.ReadDir("/root/gateway/raw-data")
-		if err != nil {
-			log.Fatal(err)
-		}
+// 		files, err := ioutil.ReadDir("/root/gateway/raw-data")
+// 		if err != nil {
+// 			log.Fatal(err)
+// 		}
 
-		var deleteFileName string
+// 		var deleteFileName string
 
-		for _, f := range files {
-			if f.Name() == val {
-				deleteFileName = f.Name()
-			}
-		}
+// 		for _, f := range files {
+// 			if f.Name() == val {
+// 				deleteFileName = f.Name()
+// 			}
+// 		}
 		
-		deleteFile(w, deleteFileName)
+// 		deleteFile(w, deleteFileName)
 
-		respond(w, state.User)
+// 		respond(w, state.User)
 
-    default:
-		http.Error(w, "method must be GET, POST, PATCH, or DELETE", http.StatusMethodNotAllowed)
-		return
-	}
-}
+//     default:
+// 		http.Error(w, "method must be GET, POST, PATCH, or DELETE", http.StatusMethodNotAllowed)
+// 		return
+// 	}
+// }
 
-func saveFile(w http.ResponseWriter, file multipart.File, handle *multipart.FileHeader) {
-	fmt.Printf("saving file: %v\n", handle.Filename)
+// func saveFile(w http.ResponseWriter, file multipart.File, handle *multipart.FileHeader) {
+// 	fmt.Printf("saving file: %v\n", handle.Filename)
 
-    data, err := ioutil.ReadAll(file)
-    if err != nil {
-        fmt.Fprintf(w, "%v", err)
-        return
-    }
+//     data, err := ioutil.ReadAll(file)
+//     if err != nil {
+//         fmt.Fprintf(w, "%v", err)
+//         return
+//     }
 
-    err = ioutil.WriteFile("/root/gateway/raw-data/"+handle.Filename, data, 0666)
-    if err != nil {
-        fmt.Fprintf(w, "%v", err)
-        return
-    }
-}
+//     err = ioutil.WriteFile("/root/gateway/raw-data/"+handle.Filename, data, 0666)
+//     if err != nil {
+//         fmt.Fprintf(w, "%v", err)
+//         return
+//     }
+// }
 
-func deleteFile(w http.ResponseWriter, deleteFileName string) {
-	if len(deleteFileName) == 0 {
-		http.Error(w, "file not found", http.StatusUnauthorized)
-		return
-	}
+// func deleteFile(w http.ResponseWriter, deleteFileName string) {
+// 	if len(deleteFileName) == 0 {
+// 		http.Error(w, "file not found", http.StatusUnauthorized)
+// 		return
+// 	}
 
-	fullpath := fmt.Sprintf("/root/gateway/raw-data/%s", deleteFileName)
-	//fmt.Printf("fullpath: %v\n", fullpath)
+// 	fullpath := fmt.Sprintf("/root/gateway/raw-data/%s", deleteFileName)
+// 	//fmt.Printf("fullpath: %v\n", fullpath)
 
-	if err := os.Remove(fullpath); err != nil {
-		fmt.Fprintf(w, "%v", err)
-		return
-	}
+// 	if err := os.Remove(fullpath); err != nil {
+// 		fmt.Fprintf(w, "%v", err)
+// 		return
+// 	}
 
-	fmt.Println("deleted")
-}
+// 	fmt.Println("deleted")
+// }

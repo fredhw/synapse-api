@@ -2,6 +2,7 @@ FROM trestletech/plumber
 
 RUN R -e "install.packages('e1071')"
 RUN R -e "install.packages('pracma')"
+RUN R -e "install.packages('jsonlite')"
 
 COPY . /app/
 

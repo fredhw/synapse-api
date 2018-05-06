@@ -62,7 +62,6 @@ hz.cos <- function(time, hertz) {
 	cos(2 * pi * time * hertz)
 }
 
-
 best.segment <- function(data, duration=3*60, quality) {
 	#identifies the best 3 minutes of recording in a signal.
 }

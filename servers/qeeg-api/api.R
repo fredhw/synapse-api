@@ -1,5 +1,6 @@
 library(e1071)
 library(pracma)
+library(jsonlite)
 source('eeg.analysis.3.1.3.R')
 
 #* @filter cors
@@ -29,13 +30,19 @@ function(){
 #' @preempt cors
 #' @serializer unboxedJSON
 #' @get /v1/sumfile/
-function(subject, session, sampling=128, window=2, sliding=0.75) {	
+function(req, subject, session, sampling=128, window=2, sliding=0.75) {	
 	channels <- c("AF3", "F7", "F3", "FC5", 
                 "T7", "P7", "O1", "O2", 
                 "P8", "T8", "FC6", "F4", 
                 "F8", "AF4")
-  
-	file <- paste("./raw-data/",subject, "_", session, ".txt", sep="")
+	print("obtaining user data from header:")
+	print(paste0("xuser=",req$HTTP_X_USER))
+	json <- fromJSON(req$HTTP_X_USER)
+  	print(paste0("userName: ", json$userName))
+
+
+
+	file <- paste("./raw-data/", json$userName, "/" ,subject, "_", session, ".txt", sep="")
   
 	if ( file.exists(file) ) {
 		data <- read.table(file, header=T)
@@ -112,13 +119,20 @@ function(subject, session, sampling=128, window=2, sliding=0.75) {
 #' @preempt cors
 #' @get /v1/spectrum/
 #' @png
-function(ch, subject, session, sampling=128, window=2, sliding=0.75) {	
+function(req, ch, subject, session, sampling=128, window=2, sliding=0.75) {	
   channels <- c("AF3", "F7", "F3", "FC5", 
                 "T7", "P7", "O1", "O2", 
                 "P8", "T8", "FC6", "F4", 
                 "F8", "AF4")
   
-  file <- paste(subject, "_", session, ".txt", sep="")
+	print("obtaining user data from header:")
+	print(paste0("xuser=",req$HTTP_X_USER))
+	json <- fromJSON(req$HTTP_X_USER)
+	print(paste0("userName: ", json$userName))
+
+
+
+	file <- paste("./raw-data/", json$userName, "/" ,subject, "_", session, ".txt", sep="")
   
   if ( file.exists(file) ) {
     data <- read.table(file, header=T)
@@ -167,13 +181,20 @@ function(ch, subject, session, sampling=128, window=2, sliding=0.75) {
 #' @param session The session name
 #' @preempt cors
 #' @get /v1/specfile/
-function(subject, session, sampling=128, window=2, sliding=0.75) {	
+function(req, subject, session, sampling=128, window=2, sliding=0.75) {	
   channels <- c("AF3", "F7", "F3", "FC5", 
                 "T7", "P7", "O1", "O2", 
                 "P8", "T8", "FC6", "F4", 
                 "F8", "AF4")
   
-  file <- paste(subject, "_", session, ".txt", sep="")
+    print("obtaining user data from header:")
+	print(paste0("xuser=",req$HTTP_X_USER))
+	json <- fromJSON(req$HTTP_X_USER)
+  	print(paste0("userName: ", json$userName))
+
+
+
+	file <- paste("./raw-data/", json$userName, "/" ,subject, "_", session, ".txt", sep="")
   
   if ( file.exists(file) ) {
     data <- read.table(file, header=T)
@@ -196,25 +217,24 @@ function(subject, session, sampling=128, window=2, sliding=0.75) {
     c_textdata <- NULL   # Coherence text data
     
 	for (ch in channels) {
-			#print(ch)
-			ts <- data[[ch]]
-			ts <- ts[1 : samples]
-			qty <- data[[paste(ch, "Q", sep="_")]]
-			qty <- qty[1 : samples]
-			spectrum <- spectral.analysis(ts, sampling, length=window, sliding=0.75, hamming=T,
-										  x=x, y=y, blink=blink, quality=qty)
-			
-			if ( is.null(textdata) ) {
-			  textdata <- rbind(c("Subject", "Channel", paste(spectrum$Freq, "Hz", sep = "")), 
-			                    c(subject, ch, spectrum$Spectrum))
-			} else {
-			  textdata <- rbind(textdata, 
-			                    c(subject, ch, spectrum$Spectrum))
-			  
-			}
+		#print(ch)
+		ts <- data[[ch]]
+		ts <- ts[1 : samples]
+		qty <- data[[paste(ch, "Q", sep="_")]]
+		qty <- qty[1 : samples]
+		spectrum <- spectral.analysis(ts, sampling, length=window, sliding=0.75, hamming=T,
+									x=x, y=y, blink=blink, quality=qty)
+		if ( is.null(textdata) ) {
+		textdata <- rbind(c("Subject", "Channel", "IAF", "IAF_Power", "Sd", paste(spectrum$Freq, "Hz", sep = "")), 
+							c(subject, ch, iaf(spectrum), iaf.power(spectrum),sd(spectrum$Spectrum), spectrum$Spectrum))
+		} else {
+		textdata <- rbind(textdata, 
+							c(subject, ch, iaf(spectrum), iaf.power(spectrum),sd(spectrum$Spectrum), spectrum$Spectrum))
+		
 		}
+	}
 
-		textdata
+	textdata
     
   } else {
     print(paste("File", file, "does not exist"))
@@ -227,13 +247,18 @@ function(subject, session, sampling=128, window=2, sliding=0.75) {
 #' @param session The session name
 #' @preempt cors
 #' @get /v1/cohrfile/
-function(subject, session, sampling=128, window=2, sliding=0.75) {	
+function(req, subject, session, sampling=128, window=2, sliding=0.75) {	
   channels <- c("AF3", "F7", "F3", "FC5", 
                 "T7", "P7", "O1", "O2", 
                 "P8", "T8", "FC6", "F4", 
                 "F8", "AF4")
   
-  file <- paste(subject, "_", session, ".txt", sep="")
+    print("obtaining user data from header:")
+	print(paste0("xuser=",req$HTTP_X_USER))
+	json <- fromJSON(req$HTTP_X_USER)
+  	print(paste0("userName: ", json$userName))
+
+	file <- paste("./raw-data/", json$userName, "/" ,subject, "_", session, ".txt", sep="")
   
   if ( file.exists(file) ) {
     data <- read.table(file, header=T)

@@ -50,6 +50,7 @@ func (ch *CORSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add(headerAllowMethods, "DELETE")
 	w.Header().Add(headerAllowHeaders, headerContentType)
 	w.Header().Add(headerAllowHeaders, headerAuthorization)
+	w.Header().Add(headerAllowHeaders, "filename")
 	w.Header().Add(headerExposeHeaders, headerAuthorization)
 	w.Header().Add(headerMaxAge, "600")
 
