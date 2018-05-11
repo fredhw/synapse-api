@@ -1,8 +1,11 @@
 FROM trestletech/plumber
 
+RUN apt-get install zip unzip
 RUN R -e "install.packages('e1071')"
 RUN R -e "install.packages('pracma')"
 RUN R -e "install.packages('jsonlite')"
+RUN R -e "install.packages('base64enc')"
+RUN R -e "install.packages('openxlsx')"
 
 COPY . /app/
 

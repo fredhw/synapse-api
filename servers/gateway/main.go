@@ -104,6 +104,7 @@ func main() {
 	mux.Handle("/v1/sumfile/", handlerCtx.NewServiceProxy(splitQeegSvcAddrs))
 	mux.Handle("/v1/specfile/", handlerCtx.NewServiceProxy(splitQeegSvcAddrs))
 	mux.Handle("/v1/cohrfile/", handlerCtx.NewServiceProxy(splitQeegSvcAddrs))
+	mux.Handle("/v1/clean/", handlerCtx.NewServiceProxy(splitQeegSvcAddrs))
 
 	corsHandler := handlers.NewCORSHandler(mux)
 
