@@ -448,7 +448,7 @@ function(req, subject, session, sampling=128, window=2, sliding=0.75) {
 			
 			qty2 <- data[[paste(ch2, "Q", sep="_")]]
 			qty2 <- qty2[1 : samples]
-			print(paste("Coherence", ch1, ch2))
+			# print(paste("Coherence", ch1, ch2))
 			cohr <- coherence.analysis(ts1, ts2, sampling, length=window, sliding=0.75, hamming=T,
 											x=x, y=y, blink=blink, quality1=qty1, quality2=qty2)
 			for (j in 1:length(band.names)) {
@@ -524,7 +524,7 @@ function(req, filename, sampling=128, window=2, sliding=0.75) {
 			
 			qty2 <- data[[paste(ch2, "Q", sep="_")]]
 			qty2 <- qty2[1 : samples]
-			print(paste("Coherence", ch1, ch2))
+			# print(paste("Coherence", ch1, ch2))
 			cohr <- coherence.analysis(ts1, ts2, sampling, length=window, sliding=0.75, hamming=T,
 											x=x, y=y, blink=blink, quality1=qty1, quality2=qty2)
 
