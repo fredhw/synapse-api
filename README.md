@@ -162,3 +162,5 @@ Returns a png image of the specified channel data plotted in a spectogram along 
 ## Authors
 
 - [Frederick Wijaya](https://github.com/fredhw) - Original author and maintainer.
+- [Mathi Manalavan](https://github.com/nila12)
+- [Sarah Phillips](https://github.com/sarahp39)
