@@ -74,7 +74,7 @@ Complete list of currently available params for the qeeg-api microservice. Take 
 
 #### POST /v1/upload (gateway)
 
-##### Required Headers
+##### Required headers
 
 - Authorization: the user authentication token
 - filename: the full name of the file to be uploaded
@@ -85,6 +85,11 @@ Uploads a selected file into the `raw-data` folder on the server.
 
 #### GET /v1/sumfile
 Content-Type: `application/json`
+
+##### Required headers
+
+- Authorization: the user authentication token
+- filename: the full name of the file to be fetched
 
 Provides a summary of the EEG input with the following structure:
 
@@ -140,6 +145,12 @@ Downloads the summary data text file.
 - filename  `string` `required`
 
 #### GET /v1/specfile
+
+##### Required headers
+
+- Authorization: the user authentication token
+- filename: the full name of the file to be fetched
+
 Content-Type: `application/json`
 
 Returns the spectrum data in array form.
@@ -184,6 +195,11 @@ Downloads the spectra data text file.
 
 #### GET /v1/cohrfile
 Content-Type: `application/json`
+
+##### Required headers
+
+- Authorization: the user authentication token
+- filename: the full name of the file to be fetched
 
 Returns the spectrum data in array form.
 
